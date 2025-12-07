@@ -1,3 +1,7 @@
 /API_REFERENCE.md
 /README_doc.md
 /SUBMISSION_GUIDE.md
+node_modules
+.env*
+
+.vercel
