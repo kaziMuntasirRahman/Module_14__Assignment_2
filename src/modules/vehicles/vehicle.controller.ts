@@ -81,7 +81,7 @@ const updateVehicle = async (req: Request, res: Response) => {
       type,
       registration_number,
       daily_rent_price,
-      availability_status
+      availability_status,
     } = req.body;
 
     const isVehicleExist = await vehicleServices.getVehicleById(vehicleId);
@@ -103,16 +103,6 @@ const updateVehicle = async (req: Request, res: Response) => {
     const updatedAvailabilityStatus =
       availability_status ?? existedVehicle.availability_status;
 
-    console.log(req.user);
-    console.log(
-      vehicleId,
-      updatedVehicleName,
-      updatedVehicleType,
-      updatedVehicleRegistrationNumber,
-      updatedVehicleDailyRentPrice,
-      updatedAvailabilityStatus
-    );
-
     const result = await vehicleServices.updateVehicle(
       vehicleId,
       updatedVehicleName,
@@ -121,9 +111,6 @@ const updateVehicle = async (req: Request, res: Response) => {
       updatedVehicleDailyRentPrice,
       updatedAvailabilityStatus
     );
-
-   //  console.log(result);
-
     if (result.rowCount === 0) {
       return res
         .status(400)
@@ -140,9 +127,53 @@ const updateVehicle = async (req: Request, res: Response) => {
   }
 };
 
+const deleteVehicle = async (req: Request, res: Response) => {
+  try {
+    const vehicleId = Number(req.params.vehicleId);
+    console.log(`vehicleId: ${vehicleId}`);
+    console.log(`type of vehicleId: ${typeof vehicleId}`);
+    
+    const isVehicleExist = await vehicleServices.getVehicleById(vehicleId);
+
+    if (!isVehicleExist) {
+      return res.status(400).json({
+        success: false,
+        message: `Vehicle, bearing id ${vehicleId} doesn't exist.`,
+      });
+    }
+
+    const existedVehicle = isVehicleExist.rows[0];
+
+    if (existedVehicle.availability_status === "booked") {
+      return res.status(400).json({
+        success: false,
+        message: `Can not delete vehicle, bearing id {vehicleId} because it is booked. `,
+      });
+    }
+    console.log("point E");
+
+    const result = await vehicleServices.deleteVehicle(vehicleId);
+    console.log("point F");
+
+    if (result.rowCount === 0) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to delete" });
+    }
+    console.log("point G");
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Vehicle deleted successfully" });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 export const vehicleController = {
   addVehicle,
   getAllVehicles,
   getVehicleById,
   updateVehicle,
+  deleteVehicle,
 };

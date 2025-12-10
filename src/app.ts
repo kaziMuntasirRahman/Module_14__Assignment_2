@@ -4,6 +4,7 @@ import logger from "./middlewares/logger";
 import { authRoutes } from "./modules/auth/auth.route";
 import { usersRoutes } from "./modules/users/user.route";
 import { vehicleRoutes } from "./modules/vehicles/vehicle.route";
+import { bookingRoute } from "./modules/bookings/booking.route";
 const app = express();
 
 // middlewares
@@ -22,6 +23,9 @@ app.use("/api/v1/users", logger, usersRoutes);
 
 // vehicles routes
 app.use("/api/v1/vehicles", logger, vehicleRoutes);
+
+// bookings routes
+app.use("/api/v1/bookings", logger, bookingRoute)
 
 // base route
 app.get("/", logger, (req: Request, res: Response) => {
