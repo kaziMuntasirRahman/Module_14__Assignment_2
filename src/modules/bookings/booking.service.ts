@@ -39,6 +39,13 @@ const createBooking = async (
 
   if (result.rowCount === 0) throw new Error(`Failed to book`);
 
+  await pool.query(
+    `
+    UPDATE vehicles SET availability_status='booked' WHERE id=$1
+    `,
+    [vehicle_id]
+  );
+
   return {
     ...result.rows[0],
     rent_start_date: result.rows[0].rent_start_date.toISOString().slice(0, 10),
@@ -105,4 +112,47 @@ const getAllBookings = async (role: string, user_id: number) => {
   return result;
 };
 
-export const bookingService = { createBooking, getAllBookings };
+const updateBooking = async (
+  bookingId: number,
+  status: "cancelled" | "returned"
+) => {
+  const existingBooking = await pool.query(
+    `SELECT * FROM bookings WHERE id=$1`,
+    [bookingId]
+  );
+  if (existingBooking.rowCount === 0) {
+    throw new Error(`Booking bearing id ${bookingId} doesn't exist.`);
+  }
+
+  const { rent_start_date, rent_end_date } = existingBooking.rows[0];
+  const startDate = new Date(rent_start_date).getTime();
+  const today = Date.now();
+
+  if (status === "cancelled" && startDate < today) {
+    throw new Error("You can't cancel the booking now.");
+  }
+
+  const result = await pool.query(
+    `
+    UPDATE vehicles SET availability_status='available' WHERE id=$1
+    `,
+    [existingBooking.rows[0].vehicle_id]
+  );
+
+
+
+  const data = {
+    ...result.rows[0],
+    status,
+    rent_start_date: rent_start_date.toISOString().slice(0, 10),
+    rent_end_date: rent_end_date.toISOString().slice(0, 10),
+  };
+
+  if (status === "returned") {
+    (data as any).vehicle = { availability_status: "available" };
+  }
+
+  return data;
+};
+
+export const bookingService = { createBooking, getAllBookings, updateBooking };

@@ -15,4 +15,10 @@ router.get(
   bookingController.getAllBookings
 );
 
+router.put(
+  "/:bookingId",
+  verifyToken(["admin", "customer"]),
+  bookingController.updateBooking
+);
+
 export const bookingRoute = router;

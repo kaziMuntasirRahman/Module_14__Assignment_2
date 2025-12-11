@@ -48,4 +48,51 @@ const getAllBookings = async (req: Request, res: Response) => {
   }
 };
 
-export const bookingController = { createBooking, getAllBookings };
+const updateBooking = async (req: Request, res: Response) => {
+  try {
+    const bookingId = Number(req.params.bookingId);
+    const { status } = req.body;
+    const { role } = req.user!;
+
+    if (
+      !bookingId ||
+      !status ||
+      (status !== "cancelled" && status !== "returned")
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid Request" });
+    }
+
+    if (
+      (role === "admin" && status === "cancelled") ||
+      (role === "customer" && status === "returned")
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: `You don't have permission to change the booking status to ${status}.`,
+      });
+    }
+
+    // if(role==='customer')
+
+    const result = await bookingService.updateBooking(bookingId, status);
+
+    res.status(200).json({
+      success: true,
+      message:
+        role === "admin"
+          ? "Booking marked as returned. Vehicle is now available"
+          : "Booking cancelled successfully",
+      data: result,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const bookingController = {
+  createBooking,
+  getAllBookings,
+  updateBooking,
+};
