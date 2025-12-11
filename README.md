@@ -1,1 +1,1 @@
-hello from the server side..
+Live server link: https://easyrent-server.vercel.app/
